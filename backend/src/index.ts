@@ -3,6 +3,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { orchestrate, client } from './orchestrator';
 import { venues } from './config/venues';
+import db from './db';
 
 // --- Env validation (Task 0 requirement: fail loudly if any key is missing) ---
 const REQUIRED_ENV = [
@@ -130,3 +131,42 @@ app.get('/venues', (_req: Request, res: Response) => {
 app.listen(PORT, () => {
   console.log(`Fan Copilot backend listening on port ${PORT}`);
 });
+
+// ── Crowd Simulator (runs in-process) ──────────────────────────────────────
+// Identical sine-wave logic from crowd-simulator.ts, now started automatically
+// when the server boots so Railway doesn't need a second process/script.
+
+const CROWD_UPDATE_INTERVAL_MS = 5_000;
+
+const venueIndexMap: Record<string, number> = {};
+venues.forEach((v, idx) => { venueIndexMap[v.id] = idx; });
+
+const updateCrowdRow = db.prepare(
+  'UPDATE crowd_status SET occupancy = ?, updated_at = ? WHERE venue_id = ? AND gate_id = ?'
+);
+
+function computeOccupancy(venueId: string, gateIndex: number, t: number): number {
+  const venueIndex = venueIndexMap[venueId] ?? 0;
+  const phase = (venueIndex * Math.PI) / 3 + (gateIndex * Math.PI) / 4;
+  const raw = Math.sin(t / 20 + phase); // ~125 s period
+  const occupancy = Math.round(20 + ((raw + 1) / 2) * 75);
+  return Math.max(20, Math.min(95, occupancy));
+}
+
+let crowdTick = 0;
+
+function runCrowdTick(): void {
+  const now = new Date().toISOString();
+  for (const venue of venues) {
+    venue.gates.forEach((gateId, gateIndex) => {
+      const occupancy = computeOccupancy(venue.id, gateIndex, crowdTick);
+      updateCrowdRow.run(occupancy, now, venue.id, gateId);
+    });
+  }
+  crowdTick++;
+}
+
+runCrowdTick(); // run once immediately on boot
+setInterval(runCrowdTick, CROWD_UPDATE_INTERVAL_MS);
+console.log('Crowd simulator running in-process (updating every 5 s).');
+

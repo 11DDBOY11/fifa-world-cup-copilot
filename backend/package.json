@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node src/index.ts",
-    "build": "tsc",
+    "build": "tsc && node dist/rag/build-index.js",
     "start": "node dist/index.js",
     "build-index": "ts-node src/rag/build-index.ts",
     "simulator": "ts-node src/simulator/crowd-simulator.ts"
