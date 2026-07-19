@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dark theme (default) */
+:root,
+[data-theme="dark"] {
+  --pitch-charcoal: #0a0e0d;
+  --turf-surface: #152214;
+  --floodlight: #f0f4f8;
+  --scoreboard-amber: #ffb000;
+  --alert-coral: #ff5a5f;
+  --sage-muted: #7b8e78;
+  --overlay: rgba(10, 14, 13, 0.90);
+  --overlay-hero: rgba(10, 14, 13, 0.88);
+}
+
+/* Light theme */
+[data-theme="light"] {
+  --pitch-charcoal: #F5F7F2;
+  --turf-surface: #FFFFFF;
+  --floodlight: #0F1B14;
+  --scoreboard-amber: #ffb000;
+  --alert-coral: #ff5a5f;
+  --sage-muted: #5a7057;
+  --overlay: rgba(245, 247, 242, 0.84);
+  --overlay-hero: rgba(245, 247, 242, 0.82);
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--pitch-charcoal);
+  color: var(--floodlight);
+  overflow-x: hidden;
+}
+
+@keyframes live-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.4;
+  }
+}
+
+.animate-live-pulse {
+  animation: live-pulse 2s infinite ease-in-out;
+}
+
+@keyframes badge-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 176, 0, 0.8);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 176, 0, 0);
+    transform: scale(1.15);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 176, 0, 0);
+    transform: scale(1);
+  }
+}
+
+.animate-badge-glow {
+  animation: badge-glow 300ms ease-out forwards;
+}
+
+@keyframes card-border-flash-muted {
+  0%, 100% {
+    border-color: rgba(123, 142, 120, 0.2);
+  }
+  50% {
+    border-color: rgba(123, 142, 120, 1);
+    box-shadow: 0 0 6px rgba(123, 142, 120, 0.4);
+  }
+}
+
+.animate-border-flash-muted {
+  animation: card-border-flash-muted 350ms ease-in-out;
+}
+
+@keyframes message-entrance {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-message-entrance {
+  animation: message-entrance 400ms ease-out forwards;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+@keyframes rotate-ball {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-rotate-ball {
+  animation: rotate-ball 12s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rotate-ball {
+    animation: none;
+  }
+}
+
+
+
