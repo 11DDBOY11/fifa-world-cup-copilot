@@ -3,7 +3,7 @@ import ChatWindow from './components/ChatWindow';
 import LanguageToggle, { Language } from './components/LanguageToggle';
 import StadiumCard, { Stadium } from './components/StadiumCard';
 import HeroLanding from './components/HeroLanding';
-import { sendMessage, getGeneralInfo } from './api';
+import { sendMessage, getGeneralInfo, getVenues } from './api';
 import footballImage from '../football.jpg';
 import type { Message } from './components/MessageBubble';
 
@@ -19,12 +19,12 @@ function generateId(): string {
 // Stable session ID for the browser session
 const SESSION_ID = generateId();
 
-// All 16 host stadiums + 1 bonus venue
-const ALL_STADIUMS: Stadium[] = [
-  { id: 'metlife', name: 'MetLife Stadium', city: 'East Rutherford, NJ', country: 'USA', isLive: true },
-  { id: 'azteca', name: 'Estadio Azteca', city: 'Mexico City', country: 'Mexico', isLive: true },
-  { id: 'bc-place', name: 'BC Place', city: 'Vancouver, BC', country: 'Canada', isLive: true },
-  { id: 'kanteerav', name: 'Sree Kanteerava Stadium', city: 'Bangalore', country: 'India', isLive: true }, // Bonus Live Venue
+// All 16 host stadiums + 1 bonus venue (starts as isLive: false, loaded dynamically)
+const INITIAL_STADIUMS: Stadium[] = [
+  { id: null, name: 'MetLife Stadium', city: 'East Rutherford, NJ', country: 'USA', isLive: false },
+  { id: null, name: 'Estadio Azteca', city: 'Mexico City', country: 'Mexico', isLive: false },
+  { id: null, name: 'BC Place', city: 'Vancouver, BC', country: 'Canada', isLive: false },
+  { id: null, name: 'Sree Kanteerava Stadium', city: 'Bangalore', country: 'India', isLive: false }, // Bonus Live Venue
   { id: null, name: 'BMO Field', city: 'Toronto, ON', country: 'Canada', isLive: false },
   { id: null, name: 'Estadio BBVA', city: 'Monterrey', country: 'Mexico', isLive: false },
   { id: null, name: 'Estadio Akron', city: 'Guadalajara', country: 'Mexico', isLive: false },
@@ -49,6 +49,38 @@ const App: React.FC = () => {
   const [language, setLanguage] = useState<Language>('en');
   const [isLoading, setIsLoading] = useState(false);
   const [venueId, setVenueId] = useState<string | null>(null);
+  const [stadiums, setStadiums] = useState<Stadium[]>(INITIAL_STADIUMS);
+
+  // Fetch live venues from backend to determine dynamic active states
+  useEffect(() => {
+    let active = true;
+    getVenues()
+      .then((liveVenues) => {
+        if (!active) return;
+        setStadiums((prev) =>
+          prev.map((stadium) => {
+            const liveMatch = liveVenues.find(
+              (v) => v.name.toLowerCase().trim() === stadium.name.toLowerCase().trim()
+            );
+            if (liveMatch) {
+              return {
+                ...stadium,
+                id: liveMatch.id,
+                isLive: true,
+              };
+            }
+            return stadium;
+          })
+        );
+      })
+      .catch((err) => {
+        console.error('Failed to load live venues from backend:', err);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Theme: read from localStorage, then system preference, default dark
   const [theme, setTheme] = useState<Theme>(() => {
@@ -192,13 +224,13 @@ const App: React.FC = () => {
     }
   };
 
-  const selectedStadium = ALL_STADIUMS.find((v) => v.id === venueId) ?? null;
+  const selectedStadium = stadiums.find((v) => v.id === venueId) ?? null;
   const canSend = !!venueId && !isLoading;
 
   if (viewState === 'home') {
     return (
       <HeroLanding
-        stadiums={ALL_STADIUMS}
+        stadiums={stadiums}
         onStadiumClick={handleStadiumClick}
         onEnterChat={() => setViewState('app')}
       />
@@ -275,7 +307,7 @@ const App: React.FC = () => {
             </h2>
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {ALL_STADIUMS.map((stadium, idx) => (
+            {stadiums.map((stadium, idx) => (
               <StadiumCard
                 key={stadium.name}
                 stadium={stadium}
